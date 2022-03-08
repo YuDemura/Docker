@@ -17,7 +17,6 @@ $statement->execute();
 $result2 = $statement->fetchAll(PDO::FETCH_ASSOC);
 var_dump($result2);
 
-
 //categoriesテーブルデータ
 $sql = "select * from categories";
 $statement = $pdo->prepare($sql);
