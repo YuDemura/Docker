@@ -60,15 +60,40 @@ foreach ($results3 as $result3) {
 echo "9月の支出の合計：" . $sum3;
 echo "<br>";
 
-$sql = "select
-            MONTH(accrual_date) as date_time, sum(amount)
-        from
-            spendings
-        group by
-            date_time";
+$sql = "select * from spendings";
 $statement = $pdo->prepare($sql);
 $statement->execute();
 $results4 = $statement->fetchAll(PDO::FETCH_ASSOC);
+
+foreach ($results4 as $result4) {
+    $dateAmountList[$result4["accrual_date"]] += $result4["amount"];
+    $totalDateList[] = $result4["accrual_date"];
+}
+
+foreach ($dateAmountList as $date => $object) {
+    $renewalDate = date('n', strtotime($date));
+    $monthAmountList[$renewalDate] += $object;
+}
+
+$countFive = count($totalDateList);
+for ($i = 0; $i < $countFive; $i++) {
+    if (substr($totalDateList[$i], -1) == 5) {
+        $get = substr($totalDateList[$i], 5, 2);
+        $reduceList[] = $get;
+    }
+}
+
+$reduceCountList = array_count_values($reduceList);
+$calculate = array_combine($monthAmountList, $reduceCountList);
+
+echo "<br>";
+echo "月順にsortして月ごとの支出の合計を一覧表示。ただし、支出日に5が含まれているときだけ1500円引いてください。";
+echo "<br>";
+
+foreach ($calculate as $monthAmount => $reduce) {
+    $output = (int)$monthAmount - $reduce * 1500;
+    echo "月の支出の合計" . $output . "<br>";
+}
 
 $sql = "select
             MONTH(accrual_date) as accrual_date
@@ -87,15 +112,6 @@ foreach ($results5 as $result5) {
     }
 }
 $count = array_count_values($monthCountList);
-
-echo "<br>";
-echo "月順にsortして月ごとの支出の合計を一覧表示。ただし、支出日に5が含まれているときだけ1500円引いてください。";
-echo "<br>";
-for ($i = 1; $i < 13; $i++) {
-    $afterReducePrice = (int)$results4[$i - 1]["sum(amount)"] - ($count[$i]) * 1500;
-    echo " $i "."月の支出の合計" . ($afterReducePrice);
-    echo "<br>";
-}
 echo "<br>";
 
 $sql = "select
@@ -136,11 +152,16 @@ $results7 = $statement->fetchAll(PDO::FETCH_ASSOC);
 echo "<br>";
 echo "支出の低い順にsortして月ごとの支出の合計を一覧表示。ただし、支出日に5が含まれているときだけ3000円引いて下さい。";
 echo "<br>";
+$monthCountList2 = [];
 foreach ($results7 as $result7) {
-    foreach ($count as $month=>$days) {
+    foreach ($count as $month => $days) {
         if ($result7["accrual_time"] == $month) {
-            $amountFinal2 = (int)$result7["sum(amount)"] -  3000 * $days;
+            $amountAfterReduce2 = (int)$result7["sum(amount)"] -  3000 * $days;
         }
     }
-    echo $result7["accrual_time"] . "月の支出の合計" . $amountFinal2 . "<br>";
+    $monthCountList2[$result7["accrual_time"]] = $amountAfterReduce2;
+}
+asort($monthCountList2);
+foreach ($monthCountList2 as $month2 => $object) {
+    echo $month2 . "月の支出の合計" . $object . "<br>";
 }
