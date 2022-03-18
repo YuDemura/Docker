@@ -70,11 +70,6 @@ foreach ($results4 as $result4) {
     $totalDateList[] = $result4["accrual_date"];
 }
 
-foreach ($dateAmountList as $date => $object) {
-    $renewalDate = date('n', strtotime($date));
-    $monthAmountList[$renewalDate] += $object;
-}
-
 $countFive = count($totalDateList);
 for ($i = 0; $i < $countFive; $i++) {
     if (substr($totalDateList[$i], -1) == 5) {
@@ -84,15 +79,24 @@ for ($i = 0; $i < $countFive; $i++) {
 }
 
 $reduceCountList = array_count_values($reduceList);
-$calculate = array_combine($monthAmountList, $reduceCountList);
+foreach ($reduceCountList as $reduceMonth => $reduceDays) {
+    $reduceAmount = 1500 * $reduceDays;
+    $reduceAmountList[] = $reduceAmount;
+}
+$combine = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+$newReduceAmountList = array_combine($combine, $reduceAmountList);
 
+foreach ($dateAmountList as $date => $object) {
+    $renewalDate = date('n', strtotime($date));
+    $monthAmountList[$renewalDate] += $object;
+}
 echo "<br>";
 echo "月順にsortして月ごとの支出の合計を一覧表示。ただし、支出日に5が含まれているときだけ1500円引いてください。";
 echo "<br>";
-
-foreach ($calculate as $monthAmount => $reduce) {
-    $output = (int)$monthAmount - $reduce * 1500;
-    echo "月の支出の合計" . $output . "<br>";
+$output = [];
+foreach (array_keys($monthAmountList + $newReduceAmountList) as $key) {
+    $output[$key] = ($monthAmountList[$key] - $newReduceAmountList[$key]);
+    echo $key . "月の支出の合計" . $output[$key] . "<br>";
 }
 
 $sql = "select
