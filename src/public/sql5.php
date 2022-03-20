@@ -65,38 +65,19 @@ $statement = $pdo->prepare($sql);
 $statement->execute();
 $results4 = $statement->fetchAll(PDO::FETCH_ASSOC);
 
-foreach ($results4 as $result4) {
-    $dateAmountList[$result4["accrual_date"]] += $result4["amount"];
-    $totalDateList[] = $result4["accrual_date"];
-}
-
-$countFive = count($totalDateList);
-for ($i = 0; $i < $countFive; $i++) {
-    if (substr($totalDateList[$i], -1) == 5) {
-        $get = substr($totalDateList[$i], 5, 2);
-        $reduceList[] = $get;
-    }
-}
-
-$reduceCountList = array_count_values($reduceList);
-foreach ($reduceCountList as $reduceMonth => $reduceDays) {
-    $reduceAmount = 1500 * $reduceDays;
-    $reduceAmountList[] = $reduceAmount;
-}
-$combine = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-$newReduceAmountList = array_combine($combine, $reduceAmountList);
-
-foreach ($dateAmountList as $date => $object) {
-    $renewalDate = date('n', strtotime($date));
-    $monthAmountList[$renewalDate] += $object;
-}
 echo "<br>";
 echo "月順にsortして月ごとの支出の合計を一覧表示。ただし、支出日に5が含まれているときだけ1500円引いてください。";
 echo "<br>";
-$output = [];
-foreach (array_keys($monthAmountList + $newReduceAmountList) as $key) {
-    $output[$key] = ($monthAmountList[$key] - $newReduceAmountList[$key]);
-    echo $key . "月の支出の合計" . $output[$key] . "<br>";
+$amountList = [];
+foreach ($results4 as $result4) {
+    [$year, $month, $day] = explode("-", $result4["accrual_date"]);
+    $amountList[$month] += $result4["amount"];
+    if (strpos($day, '5') !== false) {
+        $amountList[$month] -= 1500;
+    }
+}
+foreach ($amountList as $month=> $amount) {
+    echo ltrim($month, 0) . "月の支出の合計" . $amount . "<br>";
 }
 
 $sql = "select
